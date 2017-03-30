@@ -7,9 +7,16 @@ from models import TranslationModel
 def get_posterior_distribution_for_trg_token(trg_index, src_tokens, trg_tokens,
                                              prior_model, translation_model):
     "Compute the posterior distribution over alignments for trg_index: P(a_j = i|f_j, e)."
-    assert False, "Implement this."
+    # assert False, "Implement this."
     # marginal_prob = p(f_j|e)
     # posterior_probs[i] = p(a_j = i|f_j, e)
+    src_len, trg_len = len(src_tokens), len(trg_tokens)
+    trg_token = trg_tokens[trg_index]
+    posterior_probs = [0.0] * len(src_tokens)
+    for i, src_token in enumerate(src_tokens):
+        prior_prob = prior_model.get_prior_prob(i, trg_index, src_len, trg_len)
+        conditional_prob = translation_model.get_conditional_prob(src_token, trg_token)
+        posterior_probs[i] = prior_prob * conditional_prob
     return marginal_prob, posterior_probs
 
 def get_posterior_alignment_matrix(src_tokens, trg_tokens, prior_model, translation_model):
@@ -26,7 +33,9 @@ def collect_expected_statistics(src_corpus, trg_corpus, prior_model, translation
     corpus_marginal_log_likelihood = 0.0
     assert False, "Implement this."
     # 1. Infer posterior
+
     # 2. Collect statistics in each model.
+
     # 3. Update log prob
     return corpus_marginal_log_likelihood
 
@@ -84,6 +93,8 @@ if __name__ == "__main__":
         sys.exit(0)
     src_corpus = utils.read_all_tokens(sys.argv[1])
     trg_corpus = utils.read_all_tokens(sys.argv[2])
+    # print src_corpus[0]
+    # sys.exit(0)
     num_iterations = int(sys.argv[3])
     output_prefix = sys.argv[4]
     assert len(src_corpus) == len(trg_corpus), "Corpora should be same size!"

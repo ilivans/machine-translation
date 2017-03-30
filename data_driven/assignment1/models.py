@@ -1,3 +1,4 @@
+from collections import defaultdict
 # Models for word alignment
 
 class TranslationModel:
@@ -6,13 +7,24 @@ class TranslationModel:
     def __init__(self, src_corpus, trg_corpus):
         self._src_trg_counts = {} # Statistics
         self._trg_given_src_probs = {} # Parameters
+        # for src_sentence, trg_sentence in zip(src_corpus, trg_corpus):
+        #     for src_token in src_sentence:
+        #         if src_token not in self._src_trg_counts:
+        #             self._src_trg_counts = {}
+        #         for trg_token in trg_sentence:
+        #             self._src_trg_counts[src_token][trg_token] = self._src_trg_counts[src_token].get(trg_token, 0) + 1
+        # for src_token, trg_counts in self._src_trg_counts.iteritems():
+        #     trgs_count_total = float(sum(trg_counts.itervalues()))
+        #     self._trg_given_src_probs[src_token] = {}
+        #     for trg_token, trg_count in trg_counts:
+        #         self._trg_given_src_probs[src_token][trg_token] = trg_count / trgs_count_total
 
     def get_conditional_prob(self, src_token, trg_token):
         "Return the conditional probability of trg_token given src_token."
         if src_token not in self._trg_given_src_probs:
-            return 1.0
+            return 0.0
         if trg_token not in self._trg_given_src_probs[src_token]:
-            return 1.0
+            return 0.0
         return self._trg_given_src_probs[src_token][trg_token]
 
     def collect_statistics(self, src_tokens, trg_tokens, posterior_matrix):
