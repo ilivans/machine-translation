@@ -1,6 +1,10 @@
 #!/usr/bin/python
 import os, sys, codecs, utils
 from math import log
+
+import numpy as np
+from nltk.stem import SnowballStemmer
+
 from models import PriorModel
 from models import TranslationModel
 
@@ -13,22 +17,16 @@ def get_posterior_distribution_for_trg_token(trg_index, src_tokens, trg_tokens,
     trg_token = trg_tokens[trg_index]
     src_len, trg_len = len(src_tokens), len(trg_tokens)
 
-    conditional_probs = []
-    for src_token in src_tokens:
-        conditional_prob = translation_model.get_conditional_prob(src_token, trg_token)
-        conditional_probs.append(conditional_prob)
-    sum_cond_probs = sum(conditional_probs)
-
-    posterior_probs = []
-    marginal_prob = 0.0
+    prior_mult_condition_probs = np.zeros(src_len)
     for src_index, src_token in enumerate(src_tokens):
-        conditional_prob = conditional_probs[src_index]
-        posterior_prob = conditional_prob / sum_cond_probs # if sum_cond_probs != 0.0 else 0.0
-        posterior_probs.append(posterior_prob)
+        conditional_prob = translation_model.get_conditional_prob(src_token, trg_token)
         prior_prob = prior_model.get_prior_prob(src_index, trg_index, src_len, trg_len)
-        marginal_prob += prior_prob * conditional_prob
+        prior_mult_condition_probs[src_index] = prior_prob * conditional_prob
+    prior_mult_condition_probs = np.array(prior_mult_condition_probs)
+    marginal_prob = prior_mult_condition_probs.sum()
+    posterior_probs = prior_mult_condition_probs / marginal_prob
 
-    return marginal_prob, posterior_probs
+    return marginal_prob, list(posterior_probs)
 
 
 def get_posterior_alignment_matrix(src_tokens, trg_tokens, prior_model, translation_model):
@@ -127,5 +125,9 @@ if __name__ == "__main__":
     num_iterations = int(sys.argv[3])
     output_prefix = sys.argv[4]
     assert len(src_corpus) == len(trg_corpus), "Corpora should be same size!"
+
+    # stemmer_eng = SnowballStemmer("english")
+    # src_corpus = [[stemmer_eng.stem(token.decode("utf-8")) for token in tokens] for tokens in src_corpus]
+
     alignments = align_corpus(src_corpus, trg_corpus, num_iterations)
     utils.output_alignments_per_test_set(alignments, output_prefix)

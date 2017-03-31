@@ -1,4 +1,10 @@
 from collections import defaultdict
+
+import numpy as np
+from scipy import stats as sps
+from nltk.stem import SnowballStemmer
+stemmer_eng = SnowballStemmer("english")
+
 # Models for word alignment
 
 class TranslationModel:
@@ -27,7 +33,7 @@ class TranslationModel:
     def recompute_parameters(self):
         "Reestimate parameters from counts then reset counters"
         for src_token, trg_counts in self._src_trg_counts.iteritems():
-            trgs_count_total = float(sum(trg_counts.itervalues()))
+            trgs_count_total = sum(trg_counts.itervalues())
             self._trg_given_src_probs[src_token] = {}
             for trg_token, trg_count in trg_counts.iteritems():
                 self._trg_given_src_probs[src_token][trg_token] = trg_count / trgs_count_total
@@ -43,13 +49,21 @@ class PriorModel:
         self._distance_probs = {}
 
     def get_prior_prob(self, src_index, trg_index, src_length, trg_length):
-        "Returns a uniform prior probability."
-        return 1.0 / src_length
+        if self._distance_probs == {}:
+            return 1.0 / src_length
+        distance = abs(trg_index - src_index)
+        return self._distance_probs.get(distance, 0.0)
 
     def collect_statistics(self, src_length, trg_length, posterior_matrix):
         "Extract the necessary statistics from this matrix if needed."
-        pass
+        for trg_index, posterior_probs in enumerate(posterior_matrix):
+            for src_index, posterior_prob in enumerate(posterior_probs):
+                distance = abs(trg_index - src_index)
+                self._distance_counts[distance] = self._distance_counts.get(distance, 0.0) + posterior_prob
 
     def recompute_parameters(self):
         "Reestimate the parameters and reset counters."
-        pass
+        for distance, count in self._distance_counts.iteritems():
+            count_total = sum(self._distance_counts.itervalues())
+            self._distance_probs[distance] = count / count_total
+        self._distance_counts = {}
