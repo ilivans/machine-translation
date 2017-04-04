@@ -3,7 +3,6 @@ import os, sys, codecs, utils
 from math import log
 
 import numpy as np
-from nltk.stem import SnowballStemmer
 
 from models import PriorModel
 from models import TranslationModel
@@ -11,7 +10,7 @@ from models import TranslationModel
 
 def get_posterior_distribution_for_trg_token(trg_index, src_tokens, trg_tokens,
                                              prior_model, translation_model):
-    "Compute the posterior distribution over alignments for trg_index: P(a_j = i|f_j, e)."
+    """Compute the posterior distribution over alignments for trg_index: P(a_j = i|f_j, e)."""
     # marginal_prob = p(f_j|e)
     # posterior_probs[i] = p(a_j = i|f_j, e)
     trg_token = trg_tokens[trg_index]
@@ -30,7 +29,7 @@ def get_posterior_distribution_for_trg_token(trg_index, src_tokens, trg_tokens,
 
 
 def get_posterior_alignment_matrix(src_tokens, trg_tokens, prior_model, translation_model):
-    "For each target token compute the posterior alignment probability: p(a_j=i | f_j, e)"
+    """For each target token compute the posterior alignment probability: p(a_j=i | f_j, e)"""
     # 1. Prior model assumes that a_j is independent of all other alignments.
     # 2. Translation model assume each target word is generated independently given its alignment.
     sentence_marginal_log_likelihood = 0.0
@@ -45,7 +44,7 @@ def get_posterior_alignment_matrix(src_tokens, trg_tokens, prior_model, translat
 
 
 def collect_expected_statistics(src_corpus, trg_corpus, prior_model, translation_model):
-    "Infer posterior distribution over each sentence pair and collect statistics: E-step"
+    """Infer posterior distribution over each sentence pair and collect statistics: E-step"""
     corpus_marginal_log_likelihood = 0.0
     for src_tokens, trg_tokens in zip(src_corpus, trg_corpus):
         src_len, trg_len = len(src_tokens), len(trg_tokens)
@@ -63,7 +62,7 @@ def collect_expected_statistics(src_corpus, trg_corpus, prior_model, translation
 
 
 def reestimate_models(prior_model, translation_model):
-    "Recompute parameters of each model: M-step"
+    """Recompute parameters of each model: M-step"""
     prior_model.recompute_parameters()
     translation_model.recompute_parameters()
 
@@ -75,7 +74,7 @@ def initialize_models(src_corpus, trg_corpus):
 
 
 def estimate_models(src_corpus, trg_corpus, prior_model, translation_model, num_iterations):
-    "Estimate models iteratively."
+    """Estimate models iteratively."""
     for iteration in range(num_iterations):
         corpus_log_likelihood = collect_expected_statistics(
             src_corpus, trg_corpus, prior_model, translation_model)
@@ -86,7 +85,7 @@ def estimate_models(src_corpus, trg_corpus, prior_model, translation_model, num_
 
 
 def align_sentence_pair(src_tokens, trg_tokens, prior_probs, translation_probs):
-    "For each target token, find the src_token with the highest posterior probability."
+    """For each target token, find the src_token with the highest posterior probability."""
     # Compute the posterior distribution over alignments for all target tokens.
     _, posterior_matrix = get_posterior_alignment_matrix(
         src_tokens, trg_tokens, prior_probs, translation_probs)
@@ -99,7 +98,7 @@ def align_sentence_pair(src_tokens, trg_tokens, prior_probs, translation_probs):
 
 
 def align_corpus_given_models(src_corpus, trg_corpus, prior_model, translation_model):
-    "Align each sentence pair in the corpus in turn."
+    """Align each sentence pair in the corpus in turn."""
     alignments = []
     for i in range(len(src_corpus)):
         these_alignments = align_sentence_pair(
@@ -109,7 +108,7 @@ def align_corpus_given_models(src_corpus, trg_corpus, prior_model, translation_m
 
 
 def align_corpus(src_corpus, trg_corpus, num_iterations):
-    "Learn models and then align the corpus using them."
+    """Learn models and then align the corpus using them."""
     prior_model, translation_model = initialize_models(src_corpus, trg_corpus)
     prior_model, translation_model = estimate_models(
         src_corpus, trg_corpus, prior_model, translation_model, num_iterations)
@@ -125,9 +124,6 @@ if __name__ == "__main__":
     num_iterations = int(sys.argv[3])
     output_prefix = sys.argv[4]
     assert len(src_corpus) == len(trg_corpus), "Corpora should be same size!"
-
-    # stemmer_eng = SnowballStemmer("english")
-    # src_corpus = [[stemmer_eng.stem(token.decode("utf-8")) for token in tokens] for tokens in src_corpus]
 
     alignments = align_corpus(src_corpus, trg_corpus, num_iterations)
     utils.output_alignments_per_test_set(alignments, output_prefix)
