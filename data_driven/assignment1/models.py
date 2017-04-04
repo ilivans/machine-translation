@@ -47,23 +47,18 @@ class PriorModel:
         "Add counters and parameters here for more sophisticated models."
         self._distance_counts = {}
         self._distance_probs = {}
+        self._beta_coef = 5.
+        self._rv = sps.beta(1., self._beta_coef)
+        self._pdf = [self._rv.pdf(r) / self._beta_coef for r in np.linspace(0, 1, 50)]
 
     def get_prior_prob(self, src_index, trg_index, src_length, trg_length):
-        if self._distance_probs == {}:
-            return 1.0 / src_length
         distance = abs(trg_index - src_index)
-        return self._distance_probs.get(distance, 0.0)
+        return self._pdf[int(float(distance) / max(src_length, trg_length) * 50)]
 
     def collect_statistics(self, src_length, trg_length, posterior_matrix):
         "Extract the necessary statistics from this matrix if needed."
-        for trg_index, posterior_probs in enumerate(posterior_matrix):
-            for src_index, posterior_prob in enumerate(posterior_probs):
-                distance = abs(trg_index - src_index)
-                self._distance_counts[distance] = self._distance_counts.get(distance, 0.0) + posterior_prob
+        pass
 
     def recompute_parameters(self):
         "Reestimate the parameters and reset counters."
-        for distance, count in self._distance_counts.iteritems():
-            count_total = sum(self._distance_counts.itervalues())
-            self._distance_probs[distance] = count / count_total
-        self._distance_counts = {}
+        pass
