@@ -125,5 +125,8 @@ if __name__ == "__main__":
     output_prefix = sys.argv[4]
     assert len(src_corpus) == len(trg_corpus), "Corpora should be same size!"
 
+    src_corpus = [["<NULL>"] + src_tokens for src_tokens in src_corpus]
+
     alignments = align_corpus(src_corpus, trg_corpus, num_iterations)
+    alignments = [[(a[0] - 1, a[1]) for a in alignment if a[0] > 0] for alignment in alignments]  # remove null
     utils.output_alignments_per_test_set(alignments, output_prefix)

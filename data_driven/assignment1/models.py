@@ -56,6 +56,9 @@ class PriorModel:
         self._pdf = [self._rv.pdf(r) / self._beta_coef for r in np.linspace(0, 1, 50)]
 
     def get_prior_prob(self, src_index, trg_index, src_length, trg_length):
+        if src_index == 0:
+            return 1. / src_length
+        src_index -= 1
         distance = abs(trg_index - src_index)
         return self._pdf[int(float(distance) / max(src_length, trg_length) * 50)]
 
