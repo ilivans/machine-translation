@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os, sys, codecs, utils
+import sys, utils
 from math import log
 
 import numpy as np
