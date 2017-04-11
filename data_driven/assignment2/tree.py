@@ -20,6 +20,12 @@ class Node:
             if last == node:
                 return
 
+    def __repr__(self):
+        r = '(%s:%s  (%s))\n' % (
+            self.word, self.category, ' '.join(['%s:%s' % (
+                        child.word, child.label) for child in self.children]))
+        return r
+
 class Tree:
     def __init__(self, line):
         p = line.strip().split()
